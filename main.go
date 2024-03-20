@@ -117,7 +117,7 @@ func main() {
 		}
 	}()
 
-	logger.Info("Started proxy on " + bindIp + ":" + port)
+	logger.Info("Started neko proxy on " + bindIp + ":" + port)
 
 	// Wait for the http server to ready before joining the cluster
 	<-time.After(1 * time.Second)
