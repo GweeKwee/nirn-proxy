@@ -311,6 +311,11 @@ func (q *RequestQueue) subscribe(ch *QueueChannel, path string, pathHash uint64)
 			continue
 		}
 
+		// Hardcoded 0.25s delay before processing reactions to handle the hidden rate limit bucket
+		if strings.HasSuffix(path, "/reactions/!modify") {
+			time.Sleep(250 * time.Millisecond)
+		}
+
 		scope := resp.Header.Get("x-ratelimit-scope")
 
 		_, remaining, resetAfter, isGlobal, err := parseHeaders(&resp.Header, scope != "user")
@@ -377,12 +382,6 @@ func (q *RequestQueue) subscribe(ch *QueueChannel, path string, pathHash uint64)
 		if resp.StatusCode == 429 && scope == "shared" && (path == "/channels/!/messages/!/reactions/!modify" || path == "/channels/!/messages/!/reactions/!/!") {
 			prevRem, prevReset = remaining, resetAfter
 			continue
-		}
-
-		// Prevent a weird rate limit issue with reaction modify
-		// Based on eris code, we should sleep 250ms on this endpoint
-		if strings.HasSuffix(path, "/reactions/!modify") {
-			time.Sleep(250 * time.Millisecond)
 		}
 
 		if remaining == 0 || resp.StatusCode == 429 {
